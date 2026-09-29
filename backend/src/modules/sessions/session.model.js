@@ -60,12 +60,14 @@ const sessionSchema = new mongoose.Schema(
       ref: "User",
       default: null,
     },
+    billed: { type: Boolean, default: false }, // true once its bill exists
   },
   { timestamps: true },
 );
 
 sessionSchema.index({ cafeId: 1, startTime: -1 });
 sessionSchema.index({ cafeId: 1, isOpen: 1 });
+sessionSchema.index({ cafeId: 1, status: 1, billed: 1 });
 
 // The database itself refuses a second open session on the same device.
 sessionSchema.index(

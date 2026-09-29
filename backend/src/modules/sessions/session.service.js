@@ -8,6 +8,7 @@ import {
   getElapsedMs,
   getFinalPausedMs,
 } from "./session.logic.js";
+import { createBillForSession } from "../bills/bill.service.js";
 
 // RULE: every function takes cafeId first and every query filters by it.
 
@@ -137,7 +138,7 @@ export async function resumeSession(cafeId, id) {
   return updated;
 }
 
-export async function stopSession(cafeId, id, userId) {
+export async function stopSession(cafeId, id, userId, { paymentMethod } = {}) {
   const session = await getSession(cafeId, id);
   assertTransition(session.status, "ended");
 
@@ -174,9 +175,17 @@ export async function stopSession(cafeId, id, userId) {
     { new: true },
   );
   if (!updated) throw conflict();
-  return updated;
-}
 
+  // The session is already ended. If the bill fails, it is created later by the backfill.
+  let bill = null;
+  try {
+    bill = await createBillForSession(updated, { paymentMethod, userId });
+  } catch (err) {
+    console.error("Bill creation failed, will be backfilled:", err);
+  }
+
+  return { session: updated, bill };
+}
 export const getOneSession = (cafeId, id) => getSession(cafeId, id);
 
 export const listActiveSessions = (cafeId) =>

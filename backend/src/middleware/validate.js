@@ -5,7 +5,7 @@ const formatIssues = (error) =>
   error.issues.map((i) => ({ field: i.path.join("."), message: i.message }));
 
 export const validate = (schema) => (req, res, next) => {
-  const result = schema.safeParse(req.body);
+  const result = schema.safeParse(req.body ?? {});
   if (!result.success) {
     return next(
       new AppError(

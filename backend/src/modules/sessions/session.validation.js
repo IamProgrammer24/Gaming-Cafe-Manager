@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { PAYMENT_METHODS } from "../bills/bill.model.js";
 
 const objectId = z.string().regex(/^[0-9a-fA-F]{24}$/, "Invalid id");
 
@@ -15,4 +16,9 @@ export const listSessionsQuery = z.object({
   to: z.coerce.date().optional(),
   page: z.coerce.number().int().min(1).default(1),
   limit: z.coerce.number().int().min(1).max(100).default(20),
+});
+
+// Optional: staff can take payment in the same tap that stops the session.
+export const stopSessionSchema = z.object({
+  paymentMethod: z.enum(PAYMENT_METHODS).optional(),
 });

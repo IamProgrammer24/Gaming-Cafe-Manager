@@ -9,6 +9,7 @@ import {
   listSessions,
   toPublicSession,
 } from "./session.service.js";
+import { toPublicBill } from "../bills/bill.service.js";
 
 // serverTime lets the frontend correct for a wrong clock on the staff device.
 const send = (res, session, status = 200) => {
@@ -31,9 +32,23 @@ export const pause = asyncHandler(async (req, res) =>
 export const resume = asyncHandler(async (req, res) =>
   send(res, await resumeSession(req.cafeId, req.params.id)),
 );
-export const stop = asyncHandler(async (req, res) =>
-  send(res, await stopSession(req.cafeId, req.params.id, req.user.id)),
-);
+export const stop = asyncHandler(async (req, res) => {
+  const { session, bill } = await stopSession(
+    req.cafeId,
+    req.params.id,
+    req.user.id,
+    req.body,
+  );
+  const now = new Date();
+  res.json({
+    success: true,
+    data: {
+      session: toPublicSession(session, now),
+      bill: bill ? toPublicBill(bill) : null,
+      serverTime: now.toISOString(),
+    },
+  });
+});
 export const getOne = asyncHandler(async (req, res) =>
   send(res, await getOneSession(req.cafeId, req.params.id)),
 );
