@@ -1,5 +1,6 @@
 import { AppError } from "../../utils/AppError.js";
 import { Device } from "./device.model.js";
+import { Session } from "../sessions/session.model.js";
 
 const DEFAULT_PREFIX = { pc: "PC", ps5: "PS5", xbox: "Xbox", other: "Device" };
 
@@ -51,7 +52,20 @@ export async function bulkCreateDevices(
   return Device.insertMany(names.map((name) => ({ cafeId, name, type })));
 }
 
+async function assertNoOpenSession(cafeId, deviceId, message) {
+  if (await Session.exists({ cafeId, deviceId, isOpen: true })) {
+    throw new AppError(message, 409, "DEVICE_IN_USE");
+  }
+}
+
 export async function updateDevice(cafeId, id, data) {
+  if (data.type) {
+    await assertNoOpenSession(
+      cafeId,
+      id,
+      "Stop the running session before changing the device type",
+    );
+  }
   const device = await Device.findOneAndUpdate(
     { _id: id, cafeId, isActive: true },
     { $set: data },
@@ -63,7 +77,11 @@ export async function updateDevice(cafeId, id, data) {
 
 // Soft delete: old sessions and bills keep pointing to this device.
 export async function removeDevice(cafeId, id) {
-  // TODO (Step 4): refuse if the device has a running or paused session.
+  await assertNoOpenSession(
+    cafeId,
+    id,
+    "Stop the running session before removing this device",
+  );
   const device = await Device.findOneAndUpdate(
     { _id: id, cafeId, isActive: true },
     { $set: { isActive: false } },

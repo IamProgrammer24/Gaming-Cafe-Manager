@@ -1,0 +1,18 @@
+import { z } from "zod";
+
+const objectId = z.string().regex(/^[0-9a-fA-F]{24}$/, "Invalid id");
+
+export const startSessionSchema = z.object({
+  deviceId: objectId,
+  customerName: z.string().trim().max(60).optional(),
+  note: z.string().trim().max(200).optional(),
+});
+
+export const listSessionsQuery = z.object({
+  status: z.enum(["running", "paused", "ended"]).optional(),
+  deviceId: objectId.optional(),
+  from: z.coerce.date().optional(),
+  to: z.coerce.date().optional(),
+  page: z.coerce.number().int().min(1).default(1),
+  limit: z.coerce.number().int().min(1).max(100).default(20),
+});
