@@ -18,4 +18,5 @@ export const env = {
   accessTokenExpires: process.env.ACCESS_TOKEN_EXPIRES || "15m",
   refreshTokenExpires: process.env.REFRESH_TOKEN_EXPIRES || "7d",
   trialDays: 15,
+  graceDays: 5,
 };

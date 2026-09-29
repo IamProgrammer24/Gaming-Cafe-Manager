@@ -6,11 +6,19 @@ import cookieParser from "cookie-parser";
 import { env } from "./config/env.js";
 import { notFound, errorHandler } from "./middleware/errorHandler.js";
 import authRoutes from "./modules/auth/auth.routes.js";
+import cafeRoutes from "./modules/cafes/cafe.routes.js";
+import deviceRoutes from "./modules/devices/device.routes.js";
 
 const app = express();
 
 app.use(helmet());
-app.use(cors({ origin: env.clientUrl, credentials: true }));
+app.use(
+  cors({
+    origin: env.clientUrl,
+    credentials: true,
+    exposedHeaders: ["X-Subscription-Status"],
+  }),
+);
 app.use(express.json({ limit: "1mb" }));
 app.use(cookieParser());
 if (env.nodeEnv !== "test") app.use(morgan("dev"));
@@ -23,6 +31,8 @@ app.get("/api/v1/health", (req, res) => {
 });
 
 app.use("/api/v1/auth", authRoutes);
+app.use("/api/v1/cafe", cafeRoutes);
+app.use("/api/v1/devices", deviceRoutes);
 
 app.use(notFound);
 app.use(errorHandler);
