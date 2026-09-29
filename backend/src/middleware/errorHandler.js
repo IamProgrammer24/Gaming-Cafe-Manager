@@ -25,6 +25,21 @@ export function errorHandler(err, req, res, next) {
     code = "DUPLICATE_VALUE";
     message = "A record with this value already exists";
   }
+
+  if (err.name === "ValidationError" && err.errors) {
+    statusCode = 400;
+    code = "VALIDATION_ERROR";
+    message = "Validation failed";
+    err.details = Object.values(err.errors).map((e) => ({
+      field: e.path,
+      message: e.message,
+    }));
+  }
+  if (err.name === "CastError") {
+    statusCode = 400;
+    code = "INVALID_VALUE";
+    message = `Invalid value for ${err.path}`;
+  }
   if (statusCode === 500) {
     console.error(err);
     if (env.nodeEnv === "production") message = "Something went wrong";

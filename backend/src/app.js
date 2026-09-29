@@ -8,6 +8,7 @@ import { notFound, errorHandler } from "./middleware/errorHandler.js";
 import authRoutes from "./modules/auth/auth.routes.js";
 import cafeRoutes from "./modules/cafes/cafe.routes.js";
 import deviceRoutes from "./modules/devices/device.routes.js";
+import pricingRoutes from "./modules/pricing/pricing.routes.js";
 
 const app = express();
 
@@ -33,6 +34,7 @@ app.get("/api/v1/health", (req, res) => {
 app.use("/api/v1/auth", authRoutes);
 app.use("/api/v1/cafe", cafeRoutes);
 app.use("/api/v1/devices", deviceRoutes);
+app.use("/api/v1/pricing", pricingRoutes);
 
 app.use(notFound);
 app.use(errorHandler);
