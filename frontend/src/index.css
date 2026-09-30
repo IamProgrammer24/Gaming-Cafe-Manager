@@ -1,0 +1,58 @@
+@import "tailwindcss";
+
+/* Light theme */
+:root {
+  color-scheme: light;
+  --app: #f5f7fb;
+  --surface: #ffffff;
+  --line: #dce2ef;
+  --brand: #4361ee;
+  --brand-fg: #ffffff;
+  --fg: #141a2e;
+  --muted: #5f6b85;
+  --free: #16a34a;
+  --busy: #dc2626;
+  --paused: #d97706;
+  --money: #059669;
+}
+
+/* Dark theme (default) */
+[data-theme="dark"] {
+  color-scheme: dark;
+  --app: #0f1320;
+  --surface: #171d2e;
+  --line: #2a3350;
+  --brand: #5b7cfa;
+  --brand-fg: #ffffff;
+  --fg: #e8ecf8;
+  --muted: #8a94b0;
+  --free: #22c55e;
+  --busy: #ef4444;
+  --paused: #f59e0b;
+  --money: #34d399;
+}
+
+@theme {
+  --font-sans: "Inter Variable", ui-sans-serif, system-ui, sans-serif;
+}
+
+/* Exposes the variables as Tailwind classes: bg-app, bg-surface, text-fg, text-muted, border-line... */
+@theme inline {
+  --color-app: var(--app);
+  --color-surface: var(--surface);
+  --color-line: var(--line);
+  --color-brand: var(--brand);
+  --color-brand-fg: var(--brand-fg);
+  --color-fg: var(--fg);
+  --color-muted: var(--muted);
+  --color-free: var(--free);
+  --color-busy: var(--busy);
+  --color-paused: var(--paused);
+  --color-money: var(--money);
+}
+
+body {
+  background: var(--app);
+  color: var(--fg);
+  -webkit-font-smoothing: antialiased;
+}
