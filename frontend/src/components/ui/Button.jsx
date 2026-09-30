@@ -3,6 +3,7 @@ import { Loader2 } from "lucide-react";
 const VARIANTS = {
   primary: "bg-brand text-brand-fg hover:opacity-90",
   ghost: "border border-line text-fg hover:bg-app",
+  danger: "bg-busy text-white hover:opacity-90",
 };
 
 export function Button({

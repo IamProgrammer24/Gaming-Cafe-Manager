@@ -1,5 +1,7 @@
 import { Navigate, Route, Routes } from "react-router-dom";
 import { ProtectedRoute, PublicOnlyRoute } from "./routes/guards.jsx";
+import AppShell from "./components/AppShell.jsx";
+import ComingSoon from "./components/ComingSoon.jsx";
 import LoginPage from "./features/auth/LoginPage.jsx";
 import RegisterPage from "./features/auth/RegisterPage.jsx";
 import DashboardPage from "./features/dashboard/DashboardPage.jsx";
@@ -14,11 +16,23 @@ export default function App() {
       </Route>
 
       <Route element={<ProtectedRoute roles={["owner", "staff"]} />}>
-        <Route path="/dashboard" element={<DashboardPage />} />
+        <Route element={<AppShell />}>
+          <Route path="/dashboard" element={<DashboardPage />} />
+          <Route path="/bills" element={<ComingSoon title="Bills" />} />
+        </Route>
+      </Route>
+
+      <Route element={<ProtectedRoute roles={["owner"]} />}>
+        <Route element={<AppShell />}>
+          <Route path="/reports" element={<ComingSoon title="Reports" />} />
+          <Route path="/setup" element={<ComingSoon title="Setup" />} />
+        </Route>
       </Route>
 
       <Route element={<ProtectedRoute roles={["superadmin"]} />}>
-        <Route path="/admin" element={<AdminPage />} />
+        <Route element={<AppShell />}>
+          <Route path="/admin" element={<AdminPage />} />
+        </Route>
       </Route>
 
       <Route path="*" element={<Navigate to="/login" replace />} />

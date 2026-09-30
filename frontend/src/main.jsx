@@ -1,13 +1,29 @@
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import { BrowserRouter } from "react-router-dom";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import {
+  MutationCache,
+  QueryCache,
+  QueryClient,
+  QueryClientProvider,
+} from "@tanstack/react-query";
 import "@fontsource-variable/inter";
 import "./index.css";
 import App from "./App.jsx";
 import { AuthProvider } from "./context/AuthContext.jsx";
+import { ToastProvider } from "./context/ToastContext.jsx";
+
+// If any request is refused because the subscription ended, re-check the café
+// so the app switches to the renewal screen straight away.
+function onGlobalError(err) {
+  if (err?.code === "SUBSCRIPTION_EXPIRED") {
+    queryClient.invalidateQueries({ queryKey: ["cafe"] });
+  }
+}
 
 const queryClient = new QueryClient({
+  queryCache: new QueryCache({ onError: onGlobalError }),
+  mutationCache: new MutationCache({ onError: onGlobalError }),
   defaultOptions: {
     queries: {
       staleTime: 10_000,
@@ -23,7 +39,9 @@ createRoot(document.getElementById("root")).render(
     <QueryClientProvider client={queryClient}>
       <BrowserRouter>
         <AuthProvider>
-          <App />
+          <ToastProvider>
+            <App />
+          </ToastProvider>
         </AuthProvider>
       </BrowserRouter>
     </QueryClientProvider>

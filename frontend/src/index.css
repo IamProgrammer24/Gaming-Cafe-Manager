@@ -56,3 +56,8 @@ body {
   color: var(--fg);
   -webkit-font-smoothing: antialiased;
 }
+
+/* Stops the page behind an open dialog from scrolling */
+body:has(dialog[open]) {
+  overflow: hidden;
+}
