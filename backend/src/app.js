@@ -11,6 +11,7 @@ import deviceRoutes from "./modules/devices/device.routes.js";
 import pricingRoutes from "./modules/pricing/pricing.routes.js";
 import sessionRoutes from "./modules/sessions/session.routes.js";
 import billRoutes from "./modules/bills/bill.routes.js";
+import reportRoutes from "./modules/reports/report.routes.js";
 
 const app = express();
 
@@ -39,6 +40,7 @@ app.use("/api/v1/devices", deviceRoutes);
 app.use("/api/v1/pricing", pricingRoutes);
 app.use("/api/v1/sessions", sessionRoutes);
 app.use("/api/v1/bills", billRoutes);
+app.use("/api/v1/reports", reportRoutes);
 
 app.use(notFound);
 app.use(errorHandler);

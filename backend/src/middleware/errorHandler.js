@@ -40,6 +40,7 @@ export function errorHandler(err, req, res, next) {
     code = "INVALID_VALUE";
     message = `Invalid value for ${err.path}`;
   }
+
   if (statusCode === 500) {
     console.error(err);
     if (env.nodeEnv === "production") message = "Something went wrong";
