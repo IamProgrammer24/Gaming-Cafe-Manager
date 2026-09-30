@@ -6,6 +6,7 @@ import LoginPage from "./features/auth/LoginPage.jsx";
 import RegisterPage from "./features/auth/RegisterPage.jsx";
 import DashboardPage from "./features/dashboard/DashboardPage.jsx";
 import AdminPage from "./features/admin/AdminPage.jsx";
+import SetupPage from "./features/setup/SetupPage.jsx";
 
 export default function App() {
   return (
@@ -25,7 +26,7 @@ export default function App() {
       <Route element={<ProtectedRoute roles={["owner"]} />}>
         <Route element={<AppShell />}>
           <Route path="/reports" element={<ComingSoon title="Reports" />} />
-          <Route path="/setup" element={<ComingSoon title="Setup" />} />
+          <Route path="/setup" element={<SetupPage />} />
         </Route>
       </Route>
 
