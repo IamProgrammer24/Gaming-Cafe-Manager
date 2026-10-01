@@ -1,14 +1,15 @@
 import { Gamepad2 } from "lucide-react";
 import ThemeToggle from "./ThemeToggle.jsx";
+import { Link } from "react-router-dom";
 
 export default function AuthLayout({ title, subtitle, footer, children }) {
   return (
     <div className="flex min-h-dvh flex-col bg-app">
       <header className="flex items-center justify-between px-4 py-3 sm:px-6">
-        <div className="flex items-center gap-2 font-semibold text-fg">
+        <Link to="/" className="flex items-center gap-2 font-semibold text-fg">
           <Gamepad2 className="size-6 text-brand" aria-hidden />
           GameCafe Manager
-        </div>
+        </Link>
         <ThemeToggle />
       </header>
 

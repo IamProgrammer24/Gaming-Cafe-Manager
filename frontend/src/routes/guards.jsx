@@ -5,11 +5,13 @@ import { homePathFor } from "../utils/paths.js";
 
 // Pages that need a logged-in user (optionally with specific roles)
 export function ProtectedRoute({ roles }) {
-  const { status, user } = useAuth();
+  const { status, user, loggedOut } = useAuth();
   const location = useLocation();
 
   if (status === "loading") return <FullPageSpinner />;
   if (status !== "authenticated") {
+    // Pressed logout: go to the home page. Session expired: go to login and come back after.
+    if (loggedOut) return <Navigate to="/" replace />;
     return <Navigate to="/login" replace state={{ from: location }} />;
   }
   if (roles && !roles.includes(user.role)) {

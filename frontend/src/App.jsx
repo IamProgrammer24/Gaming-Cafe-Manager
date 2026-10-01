@@ -8,10 +8,12 @@ import AdminPage from "./features/admin/AdminPage.jsx";
 import SetupPage from "./features/setup/SetupPage.jsx";
 import BillsPage from "./features/bills/BillsPage.jsx";
 import ReportsPage from "./features/reports/ReportsPage.jsx";
+import LandingPage from "./features/landing/LandingPage.jsx";
 
 export default function App() {
   return (
     <Routes>
+      <Route path="/" element={<LandingPage />} />
       <Route element={<PublicOnlyRoute />}>
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
@@ -37,7 +39,7 @@ export default function App() {
         </Route>
       </Route>
 
-      <Route path="*" element={<Navigate to="/login" replace />} />
+      <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );
 }

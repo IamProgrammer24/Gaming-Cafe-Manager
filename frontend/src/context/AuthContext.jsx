@@ -21,7 +21,12 @@ import {
 
 const AuthContext = createContext(null);
 
-const ANONYMOUS = { status: "anonymous", user: null, cafe: null };
+const ANONYMOUS = {
+  status: "anonymous",
+  user: null,
+  cafe: null,
+  loggedOut: false,
+};
 
 export function AuthProvider({ children }) {
   const queryClient = useQueryClient();
@@ -29,24 +34,30 @@ export function AuthProvider({ children }) {
     status: "loading",
     user: null,
     cafe: null,
+    loggedOut: false,
   });
 
-  const clear = useCallback(() => {
-    setAccessToken(null);
-    queryClient.clear(); // never keep one user's data around for the next login
-    setState(ANONYMOUS);
-  }, [queryClient]);
+  // manual = true only when the user pressed the logout button
+  const clear = useCallback(
+    (manual = false) => {
+      setAccessToken(null);
+      queryClient.clear(); // never keep one user's data around for the next login
+      setState({ ...ANONYMOUS, loggedOut: manual === true });
+    },
+    [queryClient],
+  );
 
   // On every page load: try to restore the session from the refresh cookie.
   useEffect(() => {
-    setAuthLostHandler(clear);
+    setAuthLostHandler(() => clear(false)); // an expired session is not a deliberate logout
     let cancelled = false;
 
     (async () => {
       try {
         await refreshAccessToken();
         const { user, cafe } = await meRequest();
-        if (!cancelled) setState({ status: "authenticated", user, cafe });
+        if (!cancelled)
+          setState({ status: "authenticated", user, cafe, loggedOut: false });
       } catch {
         if (!cancelled) setState(ANONYMOUS);
       }
@@ -59,7 +70,7 @@ export function AuthProvider({ children }) {
 
   const applySession = useCallback(({ user, cafe, accessToken }) => {
     setAccessToken(accessToken);
-    setState({ status: "authenticated", user, cafe });
+    setState({ status: "authenticated", user, cafe, loggedOut: false });
   }, []);
 
   const login = useCallback(
@@ -77,7 +88,7 @@ export function AuthProvider({ children }) {
     } catch {
       /* clear locally even if the server can't be reached */
     }
-    clear();
+    clear(true);
   }, [clear]);
 
   const value = useMemo(
