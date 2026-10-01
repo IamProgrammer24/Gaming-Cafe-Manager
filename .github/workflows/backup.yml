@@ -1,0 +1,28 @@
+name: Nightly backup
+
+on:
+  schedule:
+    - cron: "30 20 * * *" # 02:00 IST every night (the schedule runs in UTC)
+  workflow_dispatch: # lets you run it by hand
+
+jobs:
+  backup:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm ci
+        working-directory: backend
+      - run: npm run backup
+        working-directory: backend
+        env:
+          MONGO_URI: ${{ secrets.MONGO_URI }}
+          JWT_ACCESS_SECRET: unused-by-backup
+          JWT_REFRESH_SECRET: unused-by-backup
+      - uses: actions/upload-artifact@v4
+        with:
+          name: gamecafe-backup-${{ github.run_id }}
+          path: backend/backups
+          retention-days: 14
