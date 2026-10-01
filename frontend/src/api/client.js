@@ -112,3 +112,58 @@ export async function api(path, options = {}) {
     return rawRequest(path, options); // one retry with the new token
   }
 }
+
+async function rawDownload(path) {
+  const headers = {};
+  if (accessToken) headers.Authorization = `Bearer ${accessToken}`;
+
+  let res;
+  try {
+    res = await fetch(`${BASE}${path}`, { headers, credentials: "include" });
+  } catch {
+    throw new ApiError(
+      "Cannot reach the server. Check your internet connection.",
+      0,
+      "NETWORK_ERROR",
+    );
+  }
+
+  if (!res.ok) {
+    const json = await parseJson(res);
+    const e = json?.error;
+    throw new ApiError(
+      e?.message || `Download failed (${res.status})`,
+      res.status,
+      e?.code || "UNKNOWN",
+      e?.details,
+    );
+  }
+
+  const match = /filename="([^"]+)"/.exec(
+    res.headers.get("Content-Disposition") || "",
+  );
+  return {
+    blob: await res.blob(),
+    filename: match ? match[1] : "download.csv",
+  };
+}
+
+// Same token refresh rules as api(), but returns a file instead of JSON.
+export async function apiDownload(path) {
+  try {
+    return await rawDownload(path);
+  } catch (err) {
+    if (err.status !== 401) throw err;
+    try {
+      await refreshAccessToken();
+    } catch (refreshErr) {
+      if (refreshErr.status === 401) {
+        accessToken = null;
+        onAuthLost();
+        throw err;
+      }
+      throw refreshErr;
+    }
+    return rawDownload(path);
+  }
+}

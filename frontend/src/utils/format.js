@@ -27,3 +27,26 @@ export const formatDate = (iso) =>
     year: "numeric",
     timeZone: IST,
   });
+
+export const formatTime = (iso) =>
+  new Date(iso).toLocaleTimeString("en-IN", {
+    hour: "numeric",
+    minute: "2-digit",
+    hour12: true,
+    timeZone: IST,
+  });
+
+// "2026-10-03" -> "3 Oct"
+export const formatYmd = (ymd) =>
+  new Date(`${ymd}T00:00:00Z`).toLocaleDateString("en-IN", {
+    day: "numeric",
+    month: "short",
+    timeZone: "UTC",
+  });
+
+// "2026-10" -> "Oct"
+export const formatMonthShort = (ym) =>
+  new Date(`${ym}-01T00:00:00Z`).toLocaleDateString("en-IN", {
+    month: "short",
+    timeZone: "UTC",
+  });
