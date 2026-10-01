@@ -18,4 +18,16 @@ router.patch(
   setSubscription,
 );
 
+// Diagnostic: shows how the server sees your connection. Used once after deploying.
+router.get("/network-check", (req, res) => {
+  res.json({
+    success: true,
+    data: {
+      ip: req.ip,
+      xForwardedFor: req.headers["x-forwarded-for"] ?? null,
+      trustProxy: req.app.get("trust proxy"),
+    },
+  });
+});
+
 export default router;

@@ -12,12 +12,11 @@ import {
 } from "./auth.service.js";
 
 const REFRESH_COOKIE = "refreshToken";
-const isProd = env.nodeEnv === "production";
 
 const baseCookie = {
   httpOnly: true,
-  secure: isProd,
-  sameSite: isProd ? "none" : "lax",
+  secure: env.useHttps, // true on the live https site
+  sameSite: "lax", // the site and the API share one address, so 'lax' is enough
   path: "/api/v1/auth",
 };
 
