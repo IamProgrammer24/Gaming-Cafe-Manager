@@ -9,6 +9,7 @@ import {
   getFinalPausedMs,
 } from "./session.logic.js";
 import { createBillForSession } from "../bills/bill.service.js";
+import { Cafe } from "../cafes/cafe.model.js";
 
 // RULE: every function takes cafeId first and every query filters by it.
 
@@ -84,6 +85,7 @@ export async function startSession(
   if (!device) throw new AppError("Device not found", 404, "DEVICE_NOT_FOUND");
 
   const rule = await getRuleForDeviceType(cafeId, device.type); // 422 if no price set
+  const cafe = await Cafe.findById(cafeId).select("roundUpBills").lean();
   const now = new Date();
 
   try {
@@ -95,7 +97,9 @@ export async function startSession(
       customerName,
       note,
       startTime: now,
-      rateSnapshot: buildRateSnapshot(rule, now),
+      rateSnapshot: buildRateSnapshot(rule, now, {
+        roundUp: cafe?.roundUpBills === true,
+      }),
       createdBy: userId,
     });
   } catch (err) {
@@ -109,7 +113,6 @@ export async function startSession(
     throw err;
   }
 }
-
 export async function pauseSession(cafeId, id) {
   const session = await getSession(cafeId, id);
   assertTransition(session.status, "paused");

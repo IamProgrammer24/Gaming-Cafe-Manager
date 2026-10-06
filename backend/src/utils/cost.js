@@ -1,14 +1,23 @@
 import { isWeekendIST } from "./time.js";
 
+export const ROUND_UP_STEP = 500; // Rs 5, in paise
+
+// Rounds up to the next multiple of the step. Exact multiples (and zero) stay as they are.
+export function roundUpToStep(amount, step = ROUND_UP_STEP) {
+  const rest = amount % step;
+  return rest === 0 ? amount : amount + (step - rest);
+}
+
 // Freezes the price at the moment a session starts.
 // Later price changes never touch old sessions.
-export function buildRateSnapshot(rule, startTime) {
+export function buildRateSnapshot(rule, startTime, { roundUp = false } = {}) {
   const useWeekend = isWeekendIST(startTime) && rule.weekendRatePerHour != null;
   return {
     ratePerHour: useWeekend ? rule.weekendRatePerHour : rule.ratePerHour,
     isWeekendRate: useWeekend,
     unitMinutes: rule.billingUnit,
     minCharge: rule.minCharge || 0,
+    roundUp: roundUp === true,
   };
 }
 
@@ -33,7 +42,10 @@ export function calculateCost({ startTime, endTime, pausedMs = 0, snapshot }) {
   const billedMinutes = Math.ceil(minutes / unit) * unit; // round up to unit
 
   const raw = Math.round((billedMinutes * snapshot.ratePerHour) / 60);
-  const amount = Math.max(raw, snapshot.minCharge || 0);
+  let amount = Math.max(raw, snapshot.minCharge || 0);
+
+  // Optional: round the bill up to the next Rs 5 (after the minimum charge)
+  if (snapshot.roundUp) amount = roundUpToStep(amount);
 
   return { billableMs, billedMinutes, amount };
 }

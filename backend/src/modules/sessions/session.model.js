@@ -7,6 +7,7 @@ const rateSnapshotSchema = new mongoose.Schema(
     isWeekendRate: { type: Boolean, default: false },
     unitMinutes: { type: Number, required: true },
     minCharge: { type: Number, default: 0 },
+    roundUp: { type: Boolean, default: false },
   },
   { _id: false },
 );

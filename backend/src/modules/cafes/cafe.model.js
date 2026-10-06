@@ -22,6 +22,7 @@ const cafeSchema = new mongoose.Schema(
     },
     expiresAt: { type: Date, required: true },
     plan: { type: String, default: "trial" },
+    roundUpBills: { type: Boolean, default: false },
   },
   { timestamps: true },
 );

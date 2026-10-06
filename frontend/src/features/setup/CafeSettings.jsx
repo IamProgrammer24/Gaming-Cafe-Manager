@@ -5,6 +5,7 @@ import { Input } from "../../components/ui/Input.jsx";
 import ErrorNote from "../../components/ui/ErrorNote.jsx";
 import { formatDate } from "../../utils/format.js";
 import { useCafe, useUpdateCafe } from "./hooks.js";
+import { Switch } from "../../components/ui/Switch.jsx";
 
 function CafeForm({ cafe }) {
   const update = useUpdateCafe();
@@ -14,6 +15,7 @@ function CafeForm({ cafe }) {
     address: cafe.address ?? "",
     open: cafe.openingHours?.open ?? "10:00",
     close: cafe.openingHours?.close ?? "23:00",
+    roundUpBills: Boolean(cafe.roundUpBills),
   });
   const [error, setError] = useState("");
   const [fieldErrors, setFieldErrors] = useState({});
@@ -31,6 +33,7 @@ function CafeForm({ cafe }) {
         phone: form.phone.trim(),
         address: form.address.trim(),
         openingHours: { open: form.open, close: form.close },
+        roundUpBills: form.roundUpBills,
       },
       {
         onError: (err) => {
@@ -97,6 +100,19 @@ function CafeForm({ cafe }) {
           error={fieldErrors["openingHours.close"]}
         />
       </div>
+
+      <div className="space-y-3 border-t border-line pt-4">
+        <h2 className="text-sm font-semibold uppercase tracking-wide text-muted">
+          Billing
+        </h2>
+        <Switch
+          label="Round bills up to the next ₹5"
+          hint="Applies to every device. Example: ₹4.10 becomes ₹5 and ₹6.07 becomes ₹10. Amounts already on a multiple of ₹5 stay as they are. A minimum charge is applied first."
+          checked={form.roundUpBills}
+          onChange={(value) => setForm((f) => ({ ...f, roundUpBills: value }))}
+        />
+      </div>
+
       <Button
         type="submit"
         loading={update.isPending}

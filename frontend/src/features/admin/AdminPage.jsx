@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { Mail, Phone } from "lucide-react";
+import { KeyRound, Mail, MapPin, Phone } from "lucide-react";
 import { Button } from "../../components/ui/Button.jsx";
 import { Input } from "../../components/ui/Input.jsx";
 import { Select } from "../../components/ui/Select.jsx";
@@ -153,6 +153,29 @@ function CafeCard({ cafe, onAction }) {
         <p className="mt-2 text-sm text-muted">No owner linked</p>
       )}
 
+      {(cafe.address || cafe.phone) && (
+        <div className="mt-1 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-muted">
+          {cafe.address && (
+            <a
+              href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${cafe.name} ${cafe.address}`)}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1 hover:text-fg"
+            >
+              <MapPin className="size-3.5" aria-hidden /> {cafe.address}
+            </a>
+          )}
+          {cafe.phone && cafe.phone !== cafe.owner?.phone && (
+            <a
+              href={`tel:${cafe.phone}`}
+              className="inline-flex items-center gap-1 hover:text-fg"
+            >
+              <Phone className="size-3.5" aria-hidden /> Café: {cafe.phone}
+            </a>
+          )}
+        </div>
+      )}
+
       <dl className="mt-3 grid grid-cols-2 gap-x-4 gap-y-3 sm:grid-cols-4">
         <Fact label="Ends">{expiryText(cafe)}</Fact>
         <Fact label="Devices">{cafe.devices}</Fact>
@@ -161,6 +184,15 @@ function CafeCard({ cafe, onAction }) {
           <span className="font-normal text-muted">
             {" "}
             · {cafe.sessionsTotal} total
+          </span>
+          <span className="mt-0.5 block text-xs font-normal">
+            {cafe.runningNow > 0 && (
+              <span className="text-busy">{cafe.runningNow} running now</span>
+            )}
+
+            {cafe.pausedNow > 0 && (
+              <span className="text-paused"> · {cafe.pausedNow} paused</span>
+            )}
           </span>
         </Fact>
         <Fact label="Last active">{relativeDay(cafe.lastActive)}</Fact>
@@ -205,9 +237,14 @@ export default function AdminPage() {
       .filter(
         (c) =>
           !term ||
-          [c.name, c.owner?.name, c.owner?.email, c.owner?.phone].some((v) =>
-            v?.toLowerCase().includes(term),
-          ),
+          [
+            c.name,
+            c.owner?.name,
+            c.owner?.email,
+            c.owner?.phone,
+            c.phone,
+            c.address,
+          ].some((v) => v?.toLowerCase().includes(term)),
       )
       .sort(sort);
   }, [data, search, status, sortId]);
@@ -257,7 +294,7 @@ export default function AdminPage() {
         <Stat
           label="Sessions today"
           value={s.sessionsToday}
-          sub={`${s.sessionsThisMonth} this month`}
+          sub={`${s.runningNow} running now · ${s.sessionsThisMonth} this month`}
         />
         <Stat label="Devices" value={s.totalDevices} sub="across all cafés" />
       </div>
