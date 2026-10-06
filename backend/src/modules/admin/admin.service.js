@@ -16,46 +16,71 @@ export async function getOverview() {
   const today = istDateString(now);
   const monthStart = istDayStart(`${today.slice(0, 8)}01`);
 
-  const [cafes, owners, deviceCounts, sessionStats, revenue, sessionsToday] =
-    await Promise.all([
-      Cafe.find().sort({ createdAt: -1 }).limit(500).lean(),
-      User.find({ role: "owner" }).select("name email phone cafeId").lean(),
-      Device.aggregate([
-        { $match: { isActive: true } },
-        { $group: { _id: "$cafeId", count: { $sum: 1 } } },
-      ]),
-      Session.aggregate([
-        {
-          $group: {
-            _id: "$cafeId",
-            total: { $sum: 1 },
-            thisMonth: {
-              $sum: { $cond: [{ $gte: ["$startTime", monthStart] }, 1, 0] },
-            },
-            lastActive: { $max: "$startTime" },
+  const [
+    cafes,
+    owners,
+    deviceCounts,
+    sessionStats,
+    revenue,
+    sessionsToday,
+    openSessions,
+  ] = await Promise.all([
+    Cafe.find().sort({ createdAt: -1 }).limit(500).lean(),
+    User.find({ role: "owner" }).select("name email phone cafeId").lean(),
+    Device.aggregate([
+      { $match: { isActive: true } },
+      { $group: { _id: "$cafeId", count: { $sum: 1 } } },
+    ]),
+    Session.aggregate([
+      {
+        $group: {
+          _id: "$cafeId",
+          total: { $sum: 1 },
+          thisMonth: {
+            $sum: { $cond: [{ $gte: ["$startTime", monthStart] }, 1, 0] },
           },
+          lastActive: { $max: "$startTime" },
         },
-      ]),
-      Bill.aggregate([
-        { $match: { voided: false } },
-        { $group: { _id: "$cafeId", revenue: { $sum: "$amount" } } },
-      ]),
-      Session.countDocuments({ startTime: { $gte: istDayStart(today) } }),
-    ]);
+      },
+    ]),
+    Bill.aggregate([
+      { $match: { voided: false } },
+      { $group: { _id: "$cafeId", revenue: { $sum: "$amount" } } },
+    ]),
+    Session.countDocuments({ startTime: { $gte: istDayStart(today) } }),
+
+    // Sessions open right now, split into running and paused, per café
+    Session.aggregate([
+      { $match: { isOpen: true } },
+      {
+        $group: {
+          _id: "$cafeId",
+          running: { $sum: { $cond: [{ $eq: ["$status", "running"] }, 1, 0] } },
+          paused: { $sum: { $cond: [{ $eq: ["$status", "paused"] }, 1, 0] } },
+        },
+      },
+    ]),
+  ]);
 
   const key = (id) => String(id);
   const ownerBy = new Map(owners.map((o) => [key(o.cafeId), o]));
   const devicesBy = new Map(deviceCounts.map((d) => [key(d._id), d.count]));
   const sessionsBy = new Map(sessionStats.map((s) => [key(s._id), s]));
   const revenueBy = new Map(revenue.map((r) => [key(r._id), r.revenue]));
+  const openBy = new Map(openSessions.map((o) => [key(o._id), o]));
 
   const rows = cafes.map((c) => {
     const id = key(c._id);
     const owner = ownerBy.get(id);
     const s = sessionsBy.get(id);
+    const open = openBy.get(id);
     return {
       id,
       name: c.name,
+      address: c.address || "",
+      phone: c.phone || "",
+      runningNow: open?.running ?? 0,
+      pausedNow: open?.paused ?? 0,
       owner: owner
         ? { name: owner.name, email: owner.email, phone: owner.phone }
         : null,
@@ -92,6 +117,7 @@ export async function getOverview() {
       ).length,
       totalDevices: rows.reduce((a, r) => a + r.devices, 0),
       sessionsToday,
+      runningNow: rows.reduce((a, r) => a + r.runningNow, 0),
       sessionsThisMonth: rows.reduce((a, r) => a + r.sessionsThisMonth, 0),
     },
     cafes: rows,

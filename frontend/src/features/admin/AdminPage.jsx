@@ -186,10 +186,11 @@ function CafeCard({ cafe, onAction }) {
             · {cafe.sessionsTotal} total
           </span>
           <span className="mt-0.5 block text-xs font-normal">
-            {cafe.runningNow > 0 && (
+            {cafe.runningNow > 0 ? (
               <span className="text-busy">{cafe.runningNow} running now</span>
+            ) : (
+              <span className="text-muted">None running now</span>
             )}
-
             {cafe.pausedNow > 0 && (
               <span className="text-paused"> · {cafe.pausedNow} paused</span>
             )}
