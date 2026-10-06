@@ -6,7 +6,8 @@ import { Select } from "../../components/ui/Select.jsx";
 import ErrorNote from "../../components/ui/ErrorNote.jsx";
 import { DEVICE_TYPES } from "../../utils/deviceTypes.js";
 import { MAX_PAISE, paiseToInput, rupeesToPaise } from "../../utils/money.js";
-import { useDevices, usePricing, useSavePricing } from "./hooks.js";
+import { useCafe, useDevices, usePricing, useSavePricing } from "./hooks.js";
+import { Link } from "react-router-dom";
 
 const UNIT_OPTIONS = [
   ["1", "Per minute (exact time)"],
@@ -159,6 +160,7 @@ function PricingCard({ type, deviceCount, rule }) {
 export default function PricingTab() {
   const devicesQ = useDevices();
   const pricingQ = usePricing();
+  const cafeQ = useCafe();
 
   if (devicesQ.isPending || pricingQ.isPending) {
     return (
@@ -213,6 +215,19 @@ export default function PricingTab() {
           devices.
         </p>
       </div>
+    );
+  }
+  {
+    cafeQ.data?.cafe.roundUpBills && (
+      <p className="rounded-lg border border-line bg-surface px-3 py-2 text-sm text-muted">
+        Bills are rounded up to the next ₹5.{" "}
+        <Link
+          to="/setup?tab=cafe"
+          className="font-medium text-brand hover:underline"
+        >
+          Change this in Café details
+        </Link>
+      </p>
     );
   }
 

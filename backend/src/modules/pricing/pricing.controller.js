@@ -25,7 +25,9 @@ export const estimate = asyncHandler(async (req, res) => {
 
   const start = startTime ? new Date(startTime) : new Date();
   const end = new Date(start.getTime() + minutes * 60000);
-  const snapshot = buildRateSnapshot(rule, start);
+  const snapshot = buildRateSnapshot(rule, start, {
+    roundUp: req.cafe?.roundUpBills === true,
+  });
   const cost = calculateCost({ startTime: start, endTime: end, snapshot });
 
   res.json({

@@ -37,6 +37,7 @@ export const toPublicCafe = (c) =>
     status: c.status,
     expiresAt: c.expiresAt,
     plan: c.plan,
+    roundUpBills: c.roundUpBills === true,
   };
 
 export async function registerOwner({

@@ -12,6 +12,7 @@ export async function updateCafe(cafeId, data) {
   for (const key of ["name", "address", "phone"]) {
     if (data[key] !== undefined) update[key] = data[key];
   }
+  if (data.roundUpBills !== undefined) update.roundUpBills = data.roundUpBills;
   if (data.openingHours?.open)
     update["openingHours.open"] = data.openingHours.open;
   if (data.openingHours?.close)

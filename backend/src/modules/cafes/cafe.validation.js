@@ -17,6 +17,7 @@ export const updateCafeSchema = z
     openingHours: z
       .object({ open: time.optional(), close: time.optional() })
       .optional(),
+    roundUpBills: z.boolean().optional(),
   })
   .refine((d) => Object.keys(d).length > 0, {
     message: "Send at least one field to update",
