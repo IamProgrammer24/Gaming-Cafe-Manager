@@ -28,6 +28,7 @@ const sessionSchema = new mongoose.Schema(
     // Copied from the device so history stays correct even if the device is renamed or removed
     deviceName: { type: String, required: true },
     deviceType: { type: String, enum: DEVICE_TYPES, required: true },
+    players: { type: Number, default: 1, min: 1, max: 4 },
 
     customerName: { type: String, trim: true, maxlength: 60, default: "" },
     note: { type: String, trim: true, maxlength: 200, default: "" },

@@ -19,6 +19,7 @@ const billSchema = new mongoose.Schema(
     // Copied from the session so the bill stays readable forever
     deviceName: { type: String, required: true },
     deviceType: { type: String, enum: DEVICE_TYPES, required: true },
+    players: { type: Number, default: 1 },
     customerName: { type: String, default: "" },
     startTime: { type: Date, required: true },
     endTime: { type: Date, required: true },

@@ -6,6 +6,29 @@ const wholePaise = {
   message: "{PATH} must be a whole number of paise",
 };
 
+const groupRateSchema = new mongoose.Schema(
+  {
+    players: {
+      type: Number,
+      required: true,
+      min: 2,
+      max: 4,
+      validate: {
+        validator: Number.isInteger,
+        message: "players must be a whole number",
+      },
+    },
+    ratePerHour: { type: Number, required: true, min: 0, validate: wholePaise },
+    weekendRatePerHour: {
+      type: Number,
+      default: null,
+      min: 0,
+      validate: wholePaise,
+    },
+  },
+  { _id: false },
+);
+
 const pricingRuleSchema = new mongoose.Schema(
   {
     cafeId: {
@@ -30,6 +53,7 @@ const pricingRuleSchema = new mongoose.Schema(
       },
     },
     minCharge: { type: Number, default: 0, min: 0, validate: wholePaise },
+    groupRates: { type: [groupRateSchema], default: [] },
   },
   { timestamps: true },
 );

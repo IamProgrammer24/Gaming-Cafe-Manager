@@ -25,3 +25,8 @@ export const istDayEndIso = (ymd) =>
   new Date(
     Date.parse(`${addDays(ymd, 1)}T00:00:00Z`) - IST_OFFSET_MS - 1,
   ).toISOString();
+
+export function isWeekendIST(date = new Date()) {
+  const day = new Date(date.getTime() + IST_OFFSET_MS).getUTCDay();
+  return day === 0 || day === 6;
+}

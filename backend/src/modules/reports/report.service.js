@@ -335,6 +335,7 @@ export async function exportBillsCsv(cafeId, range) {
       "Payment method",
       "Voided",
       "Void reason",
+      "players",
     ],
     ...bills.map((b) => [
       formatIST(b.endTime).slice(0, 10),
@@ -349,6 +350,7 @@ export async function exportBillsCsv(cafeId, range) {
       b.paymentMethod,
       b.voided ? "yes" : "no",
       b.voidReason,
+      b.players ?? 1,
     ]),
   ];
 

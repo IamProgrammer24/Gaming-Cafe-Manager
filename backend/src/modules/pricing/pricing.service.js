@@ -1,5 +1,6 @@
 import { AppError } from "../../utils/AppError.js";
 import { PricingRule } from "./pricing.model.js";
+import { ratesForPlayers } from "../../utils/cost.js";
 
 export const toPublicRule = (r) => ({
   id: r._id,
@@ -8,6 +9,13 @@ export const toPublicRule = (r) => ({
   weekendRatePerHour: r.weekendRatePerHour,
   billingUnit: r.billingUnit,
   minCharge: r.minCharge,
+  groupRates: [...(r.groupRates ?? [])]
+    .map((g) => ({
+      players: g.players,
+      ratePerHour: g.ratePerHour,
+      weekendRatePerHour: g.weekendRatePerHour ?? null,
+    }))
+    .sort((a, b) => a.players - b.players),
 });
 
 export const listPricing = (cafeId) =>
@@ -31,4 +39,15 @@ export async function getRuleForDeviceType(cafeId, deviceType) {
     );
   }
   return rule;
+}
+
+// Refuses a group size the café has not priced.
+export function assertPlayersPriced(rule, players) {
+  if (!ratesForPlayers(rule, players)) {
+    throw new AppError(
+      `No price is set for ${players} player${players === 1 ? "" : "s"}`,
+      422,
+      "PLAYERS_NOT_PRICED",
+    );
+  }
 }

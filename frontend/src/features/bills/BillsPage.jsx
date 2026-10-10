@@ -55,6 +55,12 @@ function BillCard({ bill, isOwner, onPay, onVoid }) {
                 · {bill.customerName}
               </span>
             )}
+            {bill.players > 1 && (
+              <span className="font-normal text-muted">
+                {" "}
+                · {bill.players} players
+              </span>
+            )}
           </p>
           <p className="mt-0.5 text-sm text-muted">
             {formatDate(bill.endTime)} · {formatTime(bill.startTime)} –{" "}

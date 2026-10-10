@@ -9,6 +9,14 @@ import { MAX_PAISE, paiseToInput, rupeesToPaise } from "../../utils/money.js";
 import { useCafe, useDevices, usePricing, useSavePricing } from "./hooks.js";
 import { Link } from "react-router-dom";
 
+const GROUP_SIZES = [2, 3, 4];
+const MAIN_FIELDS = [
+  "ratePerHour",
+  "weekendRatePerHour",
+  "billingUnit",
+  "minCharge",
+];
+
 const UNIT_OPTIONS = [
   ["1", "Per minute (exact time)"],
   ["15", "Round up to 15 minutes"],
@@ -27,6 +35,18 @@ function checkMoney(value, { required, label }) {
   return { paise };
 }
 
+function groupFormFrom(rule) {
+  const out = {};
+  for (const n of GROUP_SIZES) {
+    const row = rule?.groupRates?.find((r) => r.players === n);
+    out[n] = {
+      rate: paiseToInput(row?.ratePerHour),
+      weekend: paiseToInput(row?.weekendRatePerHour),
+    };
+  }
+  return out;
+}
+
 function PricingCard({ type, deviceCount, rule }) {
   const save = useSavePricing();
   const [form, setForm] = useState({
@@ -35,9 +55,14 @@ function PricingCard({ type, deviceCount, rule }) {
     unit: String(rule?.billingUnit ?? 1),
     minCharge: rule?.minCharge ? paiseToInput(rule.minCharge) : "",
   });
+  const [groups, setGroups] = useState(() => groupFormFrom(rule));
   const [errors, setErrors] = useState({});
+  const [groupErrors, setGroupErrors] = useState({});
+
   const onChange = (e) =>
     setForm((f) => ({ ...f, [e.target.name]: e.target.value }));
+  const onGroupChange = (n, field) => (e) =>
+    setGroups((g) => ({ ...g, [n]: { ...g[n], [field]: e.target.value } }));
 
   function submit(e) {
     e.preventDefault();
@@ -54,8 +79,34 @@ function PricingCard({ type, deviceCount, rule }) {
     if (rate.error) next.ratePerHour = rate.error;
     if (weekend.error) next.weekendRatePerHour = weekend.error;
     if (min.error) next.minCharge = min.error;
+    // setErrors(next);
+    // if (Object.keys(next).length) return;
+
+    // Rows for 2, 3 and 4 players: an empty weekday rate means "not offered"
+    const nextGroupErrors = {};
+    const groupRates = [];
+    for (const n of GROUP_SIZES) {
+      const r = checkMoney(groups[n].rate, { required: false });
+      const w = checkMoney(groups[n].weekend, { required: false });
+      const rowErrors = {};
+      if (r.error) rowErrors.rate = r.error;
+      if (w.error) rowErrors.weekend = w.error;
+      if (!r.error && !w.error && r.paise === null && w.paise !== null) {
+        rowErrors.rate = "Enter the weekday rate, or clear the weekend rate";
+      }
+      if (Object.keys(rowErrors).length) nextGroupErrors[n] = rowErrors;
+      else if (r.paise !== null) {
+        groupRates.push({
+          players: n,
+          ratePerHour: r.paise,
+          weekendRatePerHour: w.paise,
+        });
+      }
+    }
+
     setErrors(next);
-    if (Object.keys(next).length) return;
+    setGroupErrors(nextGroupErrors);
+    if (Object.keys(next).length || Object.keys(nextGroupErrors).length) return;
 
     save.mutate(
       {
@@ -64,10 +115,14 @@ function PricingCard({ type, deviceCount, rule }) {
         weekendRatePerHour: weekend.paise, // null means "same as the normal rate"
         billingUnit: Number(form.unit),
         minCharge: min.paise ?? 0,
+        groupRates,
       },
       { onError: (err) => setErrors(fieldErrorsFrom(err)) },
     );
   }
+
+  const showGenericError =
+    save.error && !Object.keys(errors).some((k) => MAIN_FIELDS.includes(k));
 
   return (
     <form
@@ -140,11 +195,50 @@ function PricingCard({ type, deviceCount, rule }) {
         />
       </div>
 
-      {save.error && Object.keys(errors).length === 0 && (
+      <fieldset className="mt-5 rounded-xl border border-line p-3 sm:p-4">
+        <legend className="px-1 text-sm font-semibold text-fg">
+          More players (optional)
+        </legend>
+        <p className="text-sm text-muted">
+          Set the <strong>total</strong> price per hour for the whole group.
+          Leave a row empty if you don't offer it. Staff will choose the number
+          of players when they start a session.
+        </p>
+        <div className="mt-3 space-y-4">
+          {GROUP_SIZES.map((n) => (
+            <div key={n} className="grid gap-3 sm:grid-cols-2">
+              <Input
+                label={`${n} players: rate per hour (₹)`}
+                inputMode="decimal"
+                autoComplete="off"
+                value={groups[n].rate}
+                onChange={onGroupChange(n, "rate")}
+                error={groupErrors[n]?.rate}
+              />
+              <Input
+                label={`${n} players: weekend rate (₹, optional)`}
+                inputMode="decimal"
+                autoComplete="off"
+                value={groups[n].weekend}
+                onChange={onGroupChange(n, "weekend")}
+                error={groupErrors[n]?.weekend}
+              />
+            </div>
+          ))}
+        </div>
+      </fieldset>
+
+      {showGenericError && (
         <div className="mt-4">
           <ErrorNote>{save.error.message}</ErrorNote>
         </div>
       )}
+
+      {/* {save.error && Object.keys(errors).length === 0 && (
+        <div className="mt-4">
+          <ErrorNote>{save.error.message}</ErrorNote>
+        </div>
+      )} */}
 
       <Button
         type="submit"
@@ -217,22 +311,19 @@ export default function PricingTab() {
       </div>
     );
   }
-  {
-    cafeQ.data?.cafe.roundUpBills && (
-      <p className="rounded-lg border border-line bg-surface px-3 py-2 text-sm text-muted">
-        Bills are rounded up to the next ₹5.{" "}
-        <Link
-          to="/setup?tab=cafe"
-          className="font-medium text-brand hover:underline"
-        >
-          Change this in Café details
-        </Link>
-      </p>
-    );
-  }
-
   return (
     <div className="space-y-4">
+      {cafeQ.data?.cafe.roundUpBills && (
+        <p className="rounded-lg border border-line bg-surface px-3 py-2 text-sm text-muted">
+          Bills are rounded up to the next ₹5.{" "}
+          <Link
+            to="/setup?tab=cafe"
+            className="font-medium text-brand hover:underline"
+          >
+            Change this in Café details
+          </Link>
+        </p>
+      )}
       {types.map((t) => (
         <PricingCard
           key={t.value}

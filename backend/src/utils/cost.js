@@ -7,13 +7,39 @@ export function roundUpToStep(amount, step = ROUND_UP_STEP) {
   const rest = amount % step;
   return rest === 0 ? amount : amount + (step - rest);
 }
+// The hourly rates for a group size. 1 player uses the main rate; 2 to 4 come from the group rows.
+// Returns null when that group size has no price.
+export function ratesForPlayers(rule, players = 1) {
+  if (players === 1) {
+    return {
+      ratePerHour: rule.ratePerHour,
+      weekendRatePerHour: rule.weekendRatePerHour ?? null,
+    };
+  }
+  const row = (rule.groupRates || []).find((r) => r.players === players);
+  return row
+    ? {
+        ratePerHour: row.ratePerHour,
+        weekendRatePerHour: row.weekendRatePerHour ?? null,
+      }
+    : null;
+}
 
 // Freezes the price at the moment a session starts.
 // Later price changes never touch old sessions.
-export function buildRateSnapshot(rule, startTime, { roundUp = false } = {}) {
-  const useWeekend = isWeekendIST(startTime) && rule.weekendRatePerHour != null;
+// roundUp comes from the café-wide setting. players is the group size chosen at the start.
+export function buildRateSnapshot(
+  rule,
+  startTime,
+  { roundUp = false, players = 1 } = {},
+) {
+  const rates = ratesForPlayers(rule, players);
+  if (!rates) throw new Error(`No price set for ${players} players`);
+
+  const useWeekend =
+    isWeekendIST(startTime) && rates.weekendRatePerHour != null;
   return {
-    ratePerHour: useWeekend ? rule.weekendRatePerHour : rule.ratePerHour,
+    ratePerHour: useWeekend ? rates.weekendRatePerHour : rates.ratePerHour,
     isWeekendRate: useWeekend,
     unitMinutes: rule.billingUnit,
     minCharge: rule.minCharge || 0,

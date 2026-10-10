@@ -7,6 +7,7 @@ export const startSessionSchema = z.object({
   deviceId: objectId,
   customerName: z.string().trim().max(60).optional(),
   note: z.string().trim().max(200).optional(),
+  players: z.number().int().min(1).max(4).default(1),
 });
 
 export const listSessionsQuery = z.object({

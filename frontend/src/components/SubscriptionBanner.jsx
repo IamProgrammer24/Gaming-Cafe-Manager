@@ -35,7 +35,16 @@ export default function SubscriptionBanner({ cafe }) {
       role="status"
       className={`mb-4 rounded-lg border px-3 py-2 text-sm ${TONES[tone]}`}
     >
-      {message} Contact {SUPPORT_CONTACT} to renew.
+      {message} Contact{" "}
+      <a
+        href={`https://wa.me/${SUPPORT_CONTACT.replace(/\D/g, "")}`}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="font-semibold underline underline-offset-2 hover:opacity-80"
+      >
+        WhatsApp
+      </a>{" "}
+      to renew.
     </p>
   );
 }
