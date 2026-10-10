@@ -1,6 +1,9 @@
 import { AppError } from "../../utils/AppError.js";
 import { Device } from "../devices/device.model.js";
-import { getRuleForDeviceType } from "../pricing/pricing.service.js";
+import {
+  getRuleForDeviceType,
+  assertPlayersPriced,
+} from "../pricing/pricing.service.js";
 import { buildRateSnapshot, calculateCost } from "../../utils/cost.js";
 import { Session } from "./session.model.js";
 import {
@@ -33,6 +36,7 @@ export function toPublicSession(s, now = new Date()) {
     deviceId: s.deviceId,
     deviceName: s.deviceName,
     deviceType: s.deviceType,
+    players: s.players ?? 1,
     customerName: s.customerName,
     note: s.note,
     status: s.status,
@@ -75,7 +79,7 @@ const conflict = () =>
 export async function startSession(
   cafeId,
   userId,
-  { deviceId, customerName, note },
+  { deviceId, customerName, note, players = 1 },
 ) {
   const device = await Device.findOne({
     _id: deviceId,
@@ -85,6 +89,7 @@ export async function startSession(
   if (!device) throw new AppError("Device not found", 404, "DEVICE_NOT_FOUND");
 
   const rule = await getRuleForDeviceType(cafeId, device.type); // 422 if no price set
+  assertPlayersPriced(rule, players); // 422 if this group size has no price
   const cafe = await Cafe.findById(cafeId).select("roundUpBills").lean();
   const now = new Date();
 
@@ -94,11 +99,13 @@ export async function startSession(
       deviceId: device._id,
       deviceName: device.name,
       deviceType: device.type,
+      players,
       customerName,
       note,
       startTime: now,
       rateSnapshot: buildRateSnapshot(rule, now, {
         roundUp: cafe?.roundUpBills === true,
+        players,
       }),
       createdBy: userId,
     });
@@ -113,6 +120,7 @@ export async function startSession(
     throw err;
   }
 }
+
 export async function pauseSession(cafeId, id) {
   const session = await getSession(cafeId, id);
   assertTransition(session.status, "paused");

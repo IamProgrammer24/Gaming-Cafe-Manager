@@ -4,6 +4,7 @@ import {
   calculateCost,
   buildRateSnapshot,
   roundUpToStep,
+  ratesForPlayers,
 } from "../src/utils/cost.js";
 import { isWeekendIST } from "../src/utils/time.js";
 
@@ -179,4 +180,110 @@ test("the snapshot copies the café-wide round-up setting", () => {
     false,
   );
   assert.equal(buildRateSnapshot(rule, monday).roundUp, false); // no setting given
+});
+
+const MULTI = {
+  ratePerHour: 10000,
+  weekendRatePerHour: 12000,
+  billingUnit: 1,
+  minCharge: 0,
+  groupRates: [
+    { players: 2, ratePerHour: 15000, weekendRatePerHour: null },
+    { players: 3, ratePerHour: 20000, weekendRatePerHour: 24000 },
+  ],
+};
+const MON = new Date("2026-10-05T10:00:00Z");
+const SAT = new Date("2026-10-03T10:00:00Z");
+
+test("ratesForPlayers: 1 player uses the main rate, groups use their own row", () => {
+  assert.deepEqual(ratesForPlayers(MULTI, 1), {
+    ratePerHour: 10000,
+    weekendRatePerHour: 12000,
+  });
+  assert.deepEqual(ratesForPlayers(MULTI), {
+    ratePerHour: 10000,
+    weekendRatePerHour: 12000,
+  });
+  assert.deepEqual(ratesForPlayers(MULTI, 2), {
+    ratePerHour: 15000,
+    weekendRatePerHour: null,
+  });
+  assert.deepEqual(ratesForPlayers(MULTI, 3), {
+    ratePerHour: 20000,
+    weekendRatePerHour: 24000,
+  });
+  assert.equal(ratesForPlayers(MULTI, 4), null); // not priced
+});
+
+test("rules saved before this feature have no group rows", () => {
+  const old = {
+    ratePerHour: 6000,
+    weekendRatePerHour: null,
+    billingUnit: 1,
+    minCharge: 0,
+  };
+  assert.deepEqual(ratesForPlayers(old, 1), {
+    ratePerHour: 6000,
+    weekendRatePerHour: null,
+  });
+  assert.equal(ratesForPlayers(old, 2), null);
+});
+
+test("the snapshot picks the rate for the group size", () => {
+  assert.equal(buildRateSnapshot(MULTI, MON).ratePerHour, 10000);
+  assert.equal(
+    buildRateSnapshot(MULTI, MON, { players: 2 }).ratePerHour,
+    15000,
+  );
+  assert.equal(
+    buildRateSnapshot(MULTI, MON, { players: 3 }).ratePerHour,
+    20000,
+  );
+});
+
+test("weekend rate per group size, falling back to the weekday rate", () => {
+  assert.equal(
+    buildRateSnapshot(MULTI, SAT, { players: 1 }).ratePerHour,
+    12000,
+  );
+  assert.equal(
+    buildRateSnapshot(MULTI, SAT, { players: 2 }).ratePerHour,
+    15000,
+  ); // no weekend rate
+  assert.equal(
+    buildRateSnapshot(MULTI, SAT, { players: 2 }).isWeekendRate,
+    false,
+  );
+  assert.equal(
+    buildRateSnapshot(MULTI, SAT, { players: 3 }).ratePerHour,
+    24000,
+  );
+  assert.equal(
+    buildRateSnapshot(MULTI, SAT, { players: 3 }).isWeekendRate,
+    true,
+  );
+});
+
+test("a group size with no price is refused", () => {
+  assert.throws(
+    () => buildRateSnapshot(MULTI, MON, { players: 4 }),
+    /No price set/,
+  );
+});
+
+test("a group session is billed at its own rate", () => {
+  const snapshot = buildRateSnapshot(MULTI, MON, { players: 2 });
+  const end = new Date(MON.getTime() + 45 * 60000);
+  assert.equal(
+    calculateCost({ startTime: MON, endTime: end, snapshot }).amount,
+    11250,
+  ); // Rs 112.50
+  assert.equal(
+    calculateCost({
+      startTime: MON,
+      endTime: end,
+      snapshot: { ...snapshot, roundUp: true },
+    }).amount,
+    11500, // round-up on: Rs 115
+  );
 });

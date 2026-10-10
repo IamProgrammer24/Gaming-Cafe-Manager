@@ -10,6 +10,7 @@ export const toPublicBill = (b) => ({
   sessionId: b.sessionId,
   deviceName: b.deviceName,
   deviceType: b.deviceType,
+  players: b.players ?? 1,
   customerName: b.customerName,
   startTime: b.startTime,
   endTime: b.endTime,
@@ -39,6 +40,7 @@ export async function createBillForSession(
   const fields = {
     deviceName: session.deviceName,
     deviceType: session.deviceType,
+    players: session.players ?? 1,
     customerName: session.customerName,
     startTime: session.startTime,
     endTime: session.endTime,

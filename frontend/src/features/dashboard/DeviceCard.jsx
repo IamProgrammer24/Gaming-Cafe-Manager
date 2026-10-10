@@ -77,6 +77,7 @@ export default function DeviceCard({
               </p>
             )}
             <p className="text-xs text-muted">
+              {session.players > 1 && <>{session.players} players · </>}
               {formatPaise(session.rateSnapshot.ratePerHour)}/hr
               {session.rateSnapshot.isWeekendRate ? " · weekend rate" : ""}
             </p>

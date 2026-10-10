@@ -15,6 +15,7 @@ import {
 import DeviceCard from "./DeviceCard.jsx";
 import StartSessionDialog from "./StartSessionDialog.jsx";
 import StopSessionDialog from "./StopSessionDialog.jsx";
+import WhatsNewBanner from "./WhatsNewBanner.jsx";
 
 const TYPE_LABEL = { pc: "PCs", ps5: "PS5", xbox: "Xbox", other: "Other" };
 
@@ -82,6 +83,9 @@ export default function DashboardPage() {
   const pricedTypes = new Set(
     (pricingQ.data?.rules ?? []).map((r) => r.deviceType),
   );
+  const ruleByType = new Map(
+    (pricingQ.data?.rules ?? []).map((r) => [r.deviceType, r]),
+  );
 
   const types = [...new Set(devices.map((d) => d.type))];
   const visible =
@@ -121,6 +125,7 @@ export default function DashboardPage() {
 
   return (
     <div className="space-y-4">
+      {isOwner && user?.id && <WhatsNewBanner key={user.id} userId={user.id} />}
       {activeQ.isRefetchError && (
         <p
           role="status"
@@ -239,6 +244,7 @@ export default function DashboardPage() {
       {startDevice && (
         <StartSessionDialog
           device={startDevice}
+          rule={ruleByType.get(startDevice.type)}
           onClose={() => setStartDevice(null)}
         />
       )}

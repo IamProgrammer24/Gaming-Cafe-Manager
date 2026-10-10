@@ -18,7 +18,15 @@ export default function ExpiredNotice({ cafe }) {
         Expired on {formatDate(cafe.expiresAt)}.
       </p>
       <p className="mt-4 text-sm text-fg">
-        To renew, contact <strong>{SUPPORT_CONTACT}</strong>
+        To renew, contact{" "}
+        <a
+          href={`https://wa.me/${SUPPORT_CONTACT.replace(/\D/g, "")}`}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="font-semibold text-green-600 hover:underline"
+        >
+          WhatsApp
+        </a>
       </p>
     </section>
   );
